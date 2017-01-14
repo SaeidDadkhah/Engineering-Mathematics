@@ -7,10 +7,11 @@ address = 'Dataset/';
 
 inImage = ReadImage(sprintf('%s%s', address, '1-04.jpg'));
 M  = size(inImage(), 1) * size(inImage(), 2);
-N = 180;
+N = 240;
 A = zeros(M, N);
 Pics = [4 5 6 7 11 13];
-for i = 1:(N/size(Pics, 2))
+numOfPics = size(Pics, 2);
+for i = 1:(N/numOfPics)
     for j = Pics;
         f = ReadImage(sprintf('%s%d-%02d.jpg', address, i, j));
         A(:, i) = f(:);
@@ -27,33 +28,66 @@ R = size(s, 2);
 %}
 
 %% 4. Coordinate x_i
-xi = u(:, 1:R)' * A;
+xi = u(:, 1:(N/numOfPics))' * A;
 
 %% 5. Choose threshold
-e1 = 9.5;
+e0 = 180;
+e1 = 9;
 
 %% 6. Projection
-efs = zeros(20, 1);
-
-ei = zeros(20, N);
-class = -1 * ones(N, 1);
-for i = 1:50
+numOfTest = 50;
+ef = zeros(1, numOfTest);
+ei = zeros(N/(numOfPics), numOfTest);
+class = -1 * ones(1, numOfTest);
+for i = 1:numOfTest
     f = ReadImage(sprintf('Dataset/%d-12.jpg', i));
     f = f(:) - meanOfA;
-    x = u(:, 1:size(Pics, 2))' * f;
+    x = u(:, 1:(N/numOfPics))' * f;
     
-    ef = f - u(:, 1:size(Pics, 2)) * x;
-    efs(i) = (ef' * ef) ^ .5;
+    tmp = f - u(:, 1:(N/numOfPics)) * x;
+    ef(i) = (tmp' * tmp) ^ .5;
     
     %% 7. Classify
-    for j = 1:N
-        tmp = xi(:, j) - x;
-        ei(i, j) = tmp' * tmp;
+    if ef(i) < e1
+        for j = 1:N
+            tmp = xi(:, j) - x;
+            ei(j, i) = tmp' * tmp;
+        end
+
+        if min(ei(:, i)) < e0
+            [m, class(i)] = min(ei(:, i));
+        end
     end
-    
-    subplot(10, 5, i);
-    plot(ei(i, :));
-    
 end
-%plot(efs, '-o')
-%[m, i] = min(tmp);
+plot(ef, '-o')
+
+%% Summary of result
+itsnc = sum(class(1:(N/numOfPics)) == -1);
+itstc = sum(class(1:(N/numOfPics)) == 1:(N/numOfPics));
+itsfc = sum(not(class(1:(N/numOfPics)) == 1:(N/numOfPics))) - itsnc;
+itsa = (itstc) / (itsnc + itstc + itsfc) * 100;
+otsnc = sum(class((N/numOfPics + 1):(numOfTest)) == -1);
+otsfc = sum(not(class((N/numOfPics + 1):(numOfTest)) == -1));
+otsa = (otsnc) / (otsnc + otsfc) * 100;
+
+tp = itstc;
+fp = itsfc + otsfc;
+fn = itsnc;
+tn = otsnc;
+precision = tp / (tp + fp);
+recall = tp / (tp + fn);
+f1 = 2 * precision * recall / (precision + recall);
+
+display('Result:')
+display(sprintf('\tPictures from people in training set:'))
+display(sprintf('\t\tNot Classified: %d', itsnc))
+display(sprintf('\t\tTrue Classified: %d', itstc))
+display(sprintf('\t\tFalse Classified: %d', itsfc))
+display(sprintf('\t\tAccuracy: %2.1f%%', itsa))
+display(sprintf('\tPictures from people not in training set:'))
+display(sprintf('\t\tNot Classified: %d', otsnc))
+display(sprintf('\t\tFalse Classified: %d', otsfc))
+display(sprintf('\t\tAccuracy: %2.1f%%', otsa))
+display(sprintf('\tPrecision: %2.1f%%', precision * 100))
+display(sprintf('\tRecall: %2.1f%%', recall * 100))
+display(sprintf('\tF1 Score: %2.1f%%', f1 * 100))
