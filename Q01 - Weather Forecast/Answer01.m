@@ -19,6 +19,8 @@ twc = [0 1 0];
 wf = forecast(n, twc);
 display(wf)
 
+input('Press any key to continue...');
+
 %% Part B
 %{
 To answer this question we should only assign a large enought number to n.
@@ -30,11 +32,13 @@ n = 500;
 generalWF = forecast(n, twc);
 display(generalWF)
 
+input('Press any key to continue...');
+
 %% Part C
 %{
 Change n, init, and trans to check the function.
 %}
-n = 1;
+n = 2;
 init = [1 0];
 trans = ...
     [.2, .8; ...
