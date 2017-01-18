@@ -1,5 +1,5 @@
 %% Init
-clear
+clear; close all;
 
 %% 1. Read image and add noise
 inImage1 = im2double(imread('45.gif'));
@@ -62,6 +62,7 @@ y = zeros(1, size(x, 2));
 for i = 1:size(x, 2)
     y(i) = mse(inImage1, u1(:, 1:x(i)) * s1(1:x(i), 1:x(i)) * v1(:, 1:x(i))');
 end
+figure();
 subplot(2, 1, 1);
 plot(x, y);
 title('First Image');
