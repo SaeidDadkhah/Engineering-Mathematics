@@ -59,7 +59,6 @@ for i = 1:numOfTest
         end
     end
 end
-plot(ef, '-o')
 
 %% Summary of result
 itsnc = sum(class(1:(N/numOfPics)) == -1);
